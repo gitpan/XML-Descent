@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                XML-Descent
-version:             v0.0.3
+version:             v0.0.4
 abstract:            Recursive descent XML parsing
 license:             perl
 generated_by:        ExtUtils::MakeMaker version 6.32

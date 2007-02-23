@@ -6,7 +6,7 @@ use Carp;
 use XML::TokeParser;
 use Class::Std;
 
-use version; our $VERSION = qv( '0.0.3' );
+use version; our $VERSION = qv( '0.0.4' );
 
 # TODO:
 #    Implement on_match($re, $sub)
@@ -212,7 +212,7 @@ XML::Descent - Recursive descent XML parsing
 
 =head1 VERSION
 
-This document describes XML::Descent version 0.0.3
+This document describes XML::Descent version 0.0.4
 
 =head1 SYNOPSIS
 
