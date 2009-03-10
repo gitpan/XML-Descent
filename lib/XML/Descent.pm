@@ -11,7 +11,7 @@ XML::Descent - Recursive descent XML parsing
 
 =head1 VERSION
 
-This document describes XML::Descent version 1.00
+This document describes XML::Descent version 1.01
 
 =head1 SYNOPSIS
 
@@ -78,7 +78,7 @@ limited to the XML inside the node that triggered the handler.
 
 =cut
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 =head1 INTERFACE 
 
@@ -97,11 +97,24 @@ that module's documentation for more details.
 
 sub new {
   my $class = shift;
-  my $args = shift || {};
+
+  my %args = ();
+  my @opt  = ();
+  for my $arg ( @_ ) {
+    if ( 'HASH' eq ref $arg ) {
+      %args = ( %args, %$arg );
+    }
+    else {
+      push @opt, $arg;
+    }
+  }
+  croak "Expected a number of name => value pairs"
+   if @opt % 2;
+  %args = ( %args, @opt );
 
   return bless {
     parser => XML::TokeParser->new(
-      delete $args->{Input} || croak( "No Input arg" ), %$args
+      delete $args{Input} || croak( "No Input arg" ), %args
     ),
     context => {
       parent => undef,
@@ -115,17 +128,15 @@ sub new {
 }
 
 sub _get_rule_handler {
-  my $self = shift;
-  my ( $tos, $tok ) = @_;
-  my $elem = $tok->[1];
+  my ( $self, $tos, $elem ) = @_;
+  croak "It is not possible to register an explicit handler for '*'"
+   if '*' eq $elem;
   while ( $tos ) {
-    if ( my $handler = $tos->{rules}->{$elem}
-      || $tos->{rules}->{'*'} ) {
-      return $handler;
+    if ( my $h = $tos->{rules}{$elem} || $tos->{rules}{'*'} ) {
+      return $h;
     }
     $tos = $tos->{parent};
   }
-
   return;
 }
 
@@ -146,7 +157,7 @@ sub walk {
   TOKEN: while ( my $tok = $self->get_token ) {
     if ( $tok->[0] eq 'S' ) {
       my $tos = $self->{context};
-      my $handler = $self->_get_rule_handler( $tos, $tok );
+      my $handler = $self->_get_rule_handler( $tos, $tok->[1] );
       if ( defined $handler ) {
         my $stopat = $self->_depth;
 
@@ -241,6 +252,7 @@ sub on {
     $path = [$path] unless ref $path eq 'ARRAY';
     $self->{context}{rules}{$_} = $cb for @$path;
   }
+  return $self;
 }
 
 =head2 C<inherit( [ element names ] )>
@@ -299,9 +311,62 @@ sub inherit {
   my ( $path ) = @_;
 
   $path = [$path] unless ref $path eq 'ARRAY';
-  $self->on( $_,
-    $self->_get_rule_handler( $self->{context}{parent}, $_ ) )
-   for @$path;
+  my $par = $self->{context}{parent};
+  $self->on( $_, $self->_get_rule_handler( $par, $_ ) ) for @$path;
+  return $self;
+}
+
+sub _filter {
+  my ( $self, $mk_wrapper ) = splice @_, 0, 2;
+  croak "Please supply a number of path => handler pairs"
+   if @_ % 2;
+
+  my $context = $self->{context};
+  while ( my ( $path, $cb ) = splice @_, 0, 2 ) {
+    $path = [$path] unless ref $path eq 'ARRAY';
+    for my $elem ( @$path ) {
+      my $h = $self->_get_rule_handler( $context, $elem )
+       or croak "No existing handler for $elem";
+      $self->{context}{rules}{$elem} = $mk_wrapper->( $h, $cb );
+    }
+  }
+  return $self;
+}
+
+=head2 C<before>
+
+Register a handler to be called before the existing handler for an
+element. As with C<on> multiple elements may be targetted by providing
+an array ref.
+
+=cut
+
+sub before {
+  return shift->_filter(
+    sub {
+      my ( $h, $cb ) = @_;
+      sub { $cb->( @_ ); $h->( @_ ) }
+    },
+    @_
+  );
+}
+
+=head2 C<after>
+
+Register a handler to be called after the existing handler for an
+element. As with C<on> multiple elements may be targetted by providing
+an array ref.
+
+=cut
+
+sub after {
+  return shift->_filter(
+    sub {
+      my ( $h, $cb ) = @_;
+      sub { $h->( @_ ); $cb->( @_ ) }
+    },
+    @_
+  );
 }
 
 =head2 C<context>
@@ -387,7 +452,7 @@ sub text {
     }
   }
 
-  return join( '', @txt );
+  return join '', @txt;
 }
 
 =head2 C<xml>
@@ -508,36 +573,47 @@ sub get_token {
   return $tok;
 }
 
+=head2 C<scope_handlers>
+
+Get a list of all handlers that are registered locally to the current
+scope. The returned list won't include '*' if a wildcard handler has
+been registered.
+
+=cut
+
+sub scope_handlers {
+  sort grep { $_ ne '*' } keys %{ shift->{context}{rules} || {} };
+}
+
+=head2 C<all_handlers>
+
+Get a list of all registered handlers in all scopes. The returned list
+won't include the '*' wildcard handler.
+
+=cut
+
+sub all_handlers {
+  my $self = shift;
+  my %seen = ();
+  my @h    = ();
+
+  my $tos  = $self->{context};
+  while ( $tos ) {
+    push @h, grep { !$seen{$_}++ }
+     grep { $_ ne '*' } keys %{ $tos->{rules} || {} };
+    $tos = $tos->{parent};
+  }
+
+  return sort @h;
+}
+
 1;
 
 __END__
 
-=head1 DIAGNOSTICS
-
-Please consult the documentation for C<XML::TokeParser> for a list of
-diagnostics it can generate.
-
-=over
-
-=item C<< No Input arg >>
-
-The constructor must be passed an arg named 'Input' which is then passed
-as the first argument to the C<XML::TokeParser> constructor.
-
-=back
-
-=head1 DEPENDENCIES
-
-XML::TokeParser
-
-=head1 INCOMPATIBILITIES
-
-None reported.
-
 =head1 SEE ALSO
 
 L<http://en.wikipedia.org/wiki/Recursive_descent_parser>,
-L<XML::Descent::Tutorial>, 
 L<XML::TokeParser>,
 L<XML::Twig>.
 

@@ -1,6 +1,6 @@
 ---
 name: XML-Descent
-version: 1.00
+version: 1.01
 author:
   - 'Andy Armstrong <andy@hexten.net>'
 abstract: Recursive descent XML parsing
@@ -8,12 +8,13 @@ license: perl
 resources:
   license: ~
 requires:
+  Test::Differences: 0
   Test::More: 0
   XML::TokeParser: 0
 provides:
   XML::Descent:
     file: lib/XML/Descent.pm
-    version: 1.00
+    version: 1.01
 generated_by: Module::Build version 0.32
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
