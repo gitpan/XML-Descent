@@ -11,7 +11,7 @@ XML::Descent - Recursive descent XML parsing
 
 =head1 VERSION
 
-This document describes XML::Descent version 1.01
+This document describes XML::Descent version 1.02
 
 =head1 SYNOPSIS
 
@@ -78,7 +78,7 @@ limited to the XML inside the node that triggered the handler.
 
 =cut
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 =head1 INTERFACE 
 
@@ -495,7 +495,7 @@ sub xml {
       last TOKEN;
     }
     elsif ( $tok->[0] eq 'T' || $tok->[0] eq 'C' ) {
-      push @xml, $tok->[1];
+      push @xml, $tok->[2];
     }
     elsif ( $tok->[0] eq 'PI' ) {
       push @xml, $tok->[3];
@@ -597,7 +597,7 @@ sub all_handlers {
   my %seen = ();
   my @h    = ();
 
-  my $tos  = $self->{context};
+  my $tos = $self->{context};
   while ( $tos ) {
     push @h, grep { !$seen{$_}++ }
      grep { $_ ne '*' } keys %{ $tos->{rules} || {} };
