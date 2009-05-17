@@ -1,6 +1,6 @@
 ---
 name: XML-Descent
-version: 1.02
+version: 1.03
 author:
   - 'Andy Armstrong <andy@hexten.net>'
 abstract: Recursive descent XML parsing
@@ -16,7 +16,7 @@ requires:
 provides:
   XML::Descent:
     file: lib/XML/Descent.pm
-    version: 1.02
+    version: 1.03
 generated_by: Module::Build version 0.33
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
