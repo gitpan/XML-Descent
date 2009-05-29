@@ -1,6 +1,6 @@
 ---
 name: XML-Descent
-version: 1.03
+version: 1.04
 author:
   - 'Andy Armstrong <andy@hexten.net>'
 abstract: Recursive descent XML parsing
@@ -8,7 +8,7 @@ license: perl
 resources:
   bugtracker: http://rt.cpan.org/NoAuth/Bugs.html?Dist=XML-Descent
   license: http://dev.perl.org/licenses/
-  repository: https://svn.hexten.net/andy/Perl/XML-Descent/trunk
+  repository: git://github.com/AndyA/XML--Descent.git
 requires:
   Test::Differences: 0
   Test::More: 0
@@ -16,7 +16,7 @@ requires:
 provides:
   XML::Descent:
     file: lib/XML/Descent.pm
-    version: 1.03
+    version: 1.04
 generated_by: Module::Build version 0.33
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
